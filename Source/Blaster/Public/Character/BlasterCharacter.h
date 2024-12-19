@@ -14,13 +14,26 @@ class BLASTER_API ABlasterCharacter : public ACharacter
 public:
 	ABlasterCharacter();
 
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	virtual void BeginPlay() override;
 
-public:
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USpringArmComponent> CameraBoom;
 
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UCameraComponent> FollowCamera;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr <class UInputDataAsset > InputDataAsset;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UWidgetComponent> OverheadWidget;
+
+private:
+	void Move(const struct FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void Jumping(const FInputActionValue& Value);
 };
