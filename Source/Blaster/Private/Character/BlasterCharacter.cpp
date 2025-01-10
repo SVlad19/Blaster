@@ -10,10 +10,15 @@
 #include "Config/InputDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Weapon/Weapon.h"
+#include "BlasterComponent/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
- 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
@@ -29,13 +34,35 @@ ABlasterCharacter::ABlasterCharacter()
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
+
+	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	Combat->SetIsReplicated(true);
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera,ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+}
+
+void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
+{
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+
+	OverlappingWeapon = Weapon;
+
+	if (IsLocallyControlled()) {
+		if (OverlappingWeapon) {
+			OverlappingWeapon->ShowPickupWidget(true);
+		}
+	}
 }
 
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	check(InputDataAsset);
+	check(Combat);
 
 	if (APlayerController* PlayerController = GetController<APlayerController>()) {
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -45,10 +72,63 @@ void ABlasterCharacter::BeginPlay()
 	}
 }
 
+void ABlasterCharacter::AimOffset(float DeltaTime)
+{
+	if (Combat && !Combat->EquippedWeapon.IsValid()) {
+		return;
+	}
+
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	if (Speed == 0.f && !bIsInAir) {
+		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		AO_Yaw = DeltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+
+	if (Speed > 0.f || bIsInAir) {
+		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+}
+
+void ABlasterCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	Combat->Character = MakeWeakObjectPtr(this);
+}
+
+bool ABlasterCharacter::IsWeaponEquipped()
+{
+	return (Combat && Combat->EquippedWeapon.IsValid());
+}
+
+bool ABlasterCharacter::IsAiming()
+{
+	return (Combat && Combat->bAiming);
+}
+
+void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_AutonomousOnly);
+}
+
+
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	AimOffset(DeltaTime);
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -59,6 +139,9 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		Input->BindAction(InputDataAsset->MoveInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
 		Input->BindAction(InputDataAsset->LookInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
 		Input->BindAction(InputDataAsset->JumpInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Jumping);
+		Input->BindAction(InputDataAsset->EquipInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Equip);
+		Input->BindAction(InputDataAsset->CrouchInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Crouching);
+		Input->BindAction(InputDataAsset->AimInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming);
 	}
 }
 
@@ -88,5 +171,59 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 void ABlasterCharacter::Jumping(const FInputActionValue& Value)
 {
 	Jump();
+}
+
+void ABlasterCharacter::Equip(const FInputActionValue& Value)
+{
+	if (Combat) {
+		if (HasAuthority()) {
+			Combat->EquipWeapon(OverlappingWeapon.Get());
+		}
+		else {
+			ServerEquipButtonPressed();
+		}
+	}
+}
+
+void ABlasterCharacter::Crouching(const FInputActionValue& Value)
+{
+	const bool Hold = Value.Get<bool>();
+
+	if (Hold) {
+		Crouch();
+	}
+	else {
+		UnCrouch();
+	}
+}
+
+void ABlasterCharacter::Aiming(const FInputActionValue& Value)
+{
+	const bool Hold = Value.Get<bool>();
+
+	if (Hold) {
+		Combat->SetAiming(true);
+	}
+	else {
+		Combat->SetAiming(false);
+	}
+}
+
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (Combat) {
+		Combat->EquipWeapon(OverlappingWeapon.Get());
+	}
+}
+
+void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
+{
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+
+	if (LastWeapon) {
+		LastWeapon->ShowPickupWidget(false);
+	}
 }
 
