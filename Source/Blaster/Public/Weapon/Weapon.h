@@ -27,6 +27,7 @@ public:
 	void SetWeaponState(EWeaponState State);
 
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
 
 protected:
 
