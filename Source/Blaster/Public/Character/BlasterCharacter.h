@@ -22,6 +22,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	virtual void PostInitializeComponents()override;
+	virtual void Jump() override;
 
 	bool IsWeaponEquipped();
 	bool IsAiming();
@@ -71,6 +72,7 @@ private:
 	TObjectPtr<AWeapon> OverlappingWeapon;
 
 	float AO_Yaw;
+	float InterpAO_Yaw;
 	float AO_Pitch;
 	FRotator StartingAimRotation;
 
