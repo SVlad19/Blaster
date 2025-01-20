@@ -15,6 +15,8 @@
 #include "BlasterComponent/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Character/BlasterAnimInstance.h"
+
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -150,6 +152,22 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 
 }
 
+void ABlasterCharacter::PlayFireMontage(bool bAiming)
+{
+	if (!Combat || !Combat->EquippedWeapon.IsValid()) {
+		return;
+	}
+
+	TWeakObjectPtr<UAnimInstance> AnimInstance = MakeWeakObjectPtr(GetMesh()->GetAnimInstance());
+	if (AnimInstance.IsValid() && FireWeaponMontage) {
+		AnimInstance->Montage_Play(FireWeaponMontage);
+
+		FName SectionName;
+		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -204,6 +222,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		Input->BindAction(InputDataAsset->EquipInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Equip);
 		Input->BindAction(InputDataAsset->CrouchInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Crouching);
 		Input->BindAction(InputDataAsset->AimInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming);
+		Input->BindAction(InputDataAsset->FireInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Fire);
 	}
 }
 
@@ -268,6 +287,15 @@ void ABlasterCharacter::Aiming(const FInputActionValue& Value)
 	}
 	else {
 		Combat->SetAiming(false);
+	}
+}
+
+void ABlasterCharacter::Fire(const FInputActionValue& Value)
+{
+	if (Combat) {
+		const bool Pressed = Value.Get<bool>();
+
+		Combat->Fire(Pressed);
 	}
 }
 

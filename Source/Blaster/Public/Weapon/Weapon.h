@@ -29,6 +29,8 @@ public:
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
 
+	void Fire();
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -59,6 +61,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<class UWidgetComponent> PickupWidget;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	TObjectPtr<class UAnimationAsset> FireAnimation;
 
 private:
 

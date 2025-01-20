@@ -34,6 +34,8 @@ public:
 
 	void TurnInPlace(float DeltaTime);
 
+	void PlayFireMontage(bool bAiming);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -57,6 +59,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class UCombatComponent> Combat;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<class UAnimMontage> FireWeaponMontage;
+
 private:
 	void Move(const struct FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -64,6 +69,7 @@ private:
 	void Equip(const FInputActionValue& Value);
 	void Crouching(const FInputActionValue& Value);
 	void Aiming(const FInputActionValue& Value);
+	void Fire(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);

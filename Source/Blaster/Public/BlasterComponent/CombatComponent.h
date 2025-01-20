@@ -25,6 +25,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	void SetAiming(bool bIsAiming);
+	void Fire(bool bPressed);
 
 	UFUNCTION(Server,Reliable)
 	void ServerSetAiming(bool bIsAiming);
@@ -47,5 +48,7 @@ private:
 	
 	UPROPERTY(Replicated)
 	bool bAiming;
+
+	bool bFireButtonPressed;
 
 };

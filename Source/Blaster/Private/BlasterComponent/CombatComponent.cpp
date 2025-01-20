@@ -45,6 +45,18 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	}
 }
 
+void UCombatComponent::Fire(bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+
+	if (Character.IsValid() && EquippedWeapon.IsValid()) {
+		if (bPressed) {
+			Character->PlayFireMontage(bAiming);
+			EquippedWeapon->Fire();
+		}
+	}
+}
+
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 {
 	bAiming = bIsAiming;
