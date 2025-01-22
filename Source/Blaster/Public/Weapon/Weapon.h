@@ -29,7 +29,7 @@ public:
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
 
-	void Fire();
+	virtual void Fire(const FVector& HitTarget);
 
 protected:
 

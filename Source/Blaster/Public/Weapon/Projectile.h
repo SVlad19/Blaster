@@ -22,5 +22,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class UBoxComponent> CollisionBox;
-
 };

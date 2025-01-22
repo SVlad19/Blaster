@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+constexpr float TRACE_LENGTH = 80000.f;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -23,6 +24,7 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	void SetAiming(bool bIsAiming);
 	void Fire(bool bPressed);
@@ -30,8 +32,16 @@ protected:
 	UFUNCTION(Server,Reliable)
 	void ServerSetAiming(bool bIsAiming);
 
+	UFUNCTION(Server, Reliable)
+	void ServerFire();	
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire();
+
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;
@@ -51,4 +61,5 @@ private:
 
 	bool bFireButtonPressed;
 
+	FVector HitTarget;
 };
