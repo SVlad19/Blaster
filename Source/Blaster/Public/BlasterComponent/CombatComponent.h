@@ -43,6 +43,8 @@ protected:
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	void SetHUDCrosshairs(float DeltaTime);
+
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;
 
@@ -52,6 +54,8 @@ protected:
 private:
 
 	TWeakObjectPtr<class ABlasterCharacter> Character;
+	TWeakObjectPtr<class ABlasterPlayerController> Controller;
+	TWeakObjectPtr<class ABlasterHUD> HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	TWeakObjectPtr<class AWeapon> EquippedWeapon;
@@ -60,4 +64,11 @@ private:
 	bool bAiming;
 
 	bool bFireButtonPressed;
+
+	/**
+	*  HUD and crosshairs
+	*/
+
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
 };

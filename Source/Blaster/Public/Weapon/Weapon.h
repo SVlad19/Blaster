@@ -31,6 +31,25 @@ public:
 
 	virtual void Fire(const FVector& HitTarget);
 
+	/*
+	* Textures for the Weapon crosshairs
+	*/
+
+	UPROPERTY(EditAnywhere, Category = "Croshairs")
+	TObjectPtr<UTexture2D> CrosshairsCenter;
+
+	UPROPERTY(EditAnywhere, Category = "Croshairs")
+	TObjectPtr<UTexture2D> CrosshairsLeft;
+
+	UPROPERTY(EditAnywhere, Category = "Croshairs")
+	TObjectPtr<UTexture2D> CrosshairsRight;
+
+	UPROPERTY(EditAnywhere, Category = "Croshairs")
+	TObjectPtr<UTexture2D> CrosshairsTop;
+
+	UPROPERTY(EditAnywhere, Category = "Croshairs")
+	TObjectPtr<UTexture2D> CrosshairsBottom;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -75,5 +94,4 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
-
 };
