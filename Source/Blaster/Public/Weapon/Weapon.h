@@ -28,6 +28,8 @@ public:
 
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
+	FORCEINLINE float GetZoomedFOV()const { return ZoomedFOV; }
+	FORCEINLINE float GetZoomInterpSpeed()const { return ZoomInterpSpeed; }
 
 	virtual void Fire(const FVector& HitTarget);
 
@@ -49,6 +51,16 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Croshairs")
 	TObjectPtr<UTexture2D> CrosshairsBottom;
+
+	/**
+	* Zoomed FOV while aiming
+	*/
+
+	UPROPERTY(EditAnywhere)
+	float ZoomedFOV = 30.f;
+
+	UPROPERTY(EditAnywhere)
+	float ZoomInterpSpeed = 20.f;
 
 protected:
 

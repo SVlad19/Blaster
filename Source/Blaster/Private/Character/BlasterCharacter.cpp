@@ -74,6 +74,15 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon()
 	return Combat->EquippedWeapon.Get();
 }
 
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	if (!Combat) {
+		return FVector();
+	}
+
+	return Combat->HitTarget;
+}
+
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();

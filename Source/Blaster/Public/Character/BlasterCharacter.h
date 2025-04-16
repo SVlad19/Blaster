@@ -7,7 +7,8 @@
 #include "BlasterTypes/TurningInPlace.h"
 #include "BlasterCharacter.generated.h"
 
-
+struct FInputActionValue;
+class UCameraComponent;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter
@@ -29,12 +30,16 @@ public:
 
 	FORCEINLINE float GetAO_Yaw()const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch()const { return AO_Pitch; }
-	AWeapon* GetEquippedWeapon();
 	FORCEINLINE ETurningInPlace GetTurningInPlace()const { return TurningInPlace; }
+	FORCEINLINE UCameraComponent* GetFollowCamera()const { return FollowCamera; }
+
+	AWeapon* GetEquippedWeapon();
+	FVector GetHitTarget() const;
 
 	void TurnInPlace(float DeltaTime);
 
 	void PlayFireMontage(bool bAiming);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -48,7 +53,7 @@ protected:
 	TObjectPtr<class USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<class UCameraComponent> FollowCamera;
+	TObjectPtr<UCameraComponent> FollowCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr <class UInputDataAsset > InputDataAsset;
@@ -63,7 +68,7 @@ protected:
 	TObjectPtr<class UAnimMontage> FireWeaponMontage;
 
 private:
-	void Move(const struct FInputActionValue& Value);
+	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jumping(const FInputActionValue& Value);
 	void Equip(const FInputActionValue& Value);
