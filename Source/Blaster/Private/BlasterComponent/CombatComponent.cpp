@@ -11,8 +11,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "PlayerController/BlasterPlayerController.h"
-#include "HUD/BlasterHUD.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -63,7 +63,6 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 	if (Controller.IsValid()) {
 		HUD = HUD.IsValid() ? HUD : MakeWeakObjectPtr(Cast<ABlasterHUD>(Controller->GetHUD()));
 		if (HUD.IsValid()) {
-			FHUDPackage HUDPackage;
 			if (EquippedWeapon.IsValid()) {
 				HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairsCenter;
 				HUDPackage.CrosshairLeft = EquippedWeapon->CrosshairsLeft;
@@ -133,6 +132,29 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 	}
 }
 
+void UCombatComponent::StartFireTimer()
+{
+	if (!EquippedWeapon.IsValid() || !Character.IsValid()) {
+		return;
+	}
+
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, EquippedWeapon->FireDelay);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	bCanFire = true;
+	if (!EquippedWeapon.IsValid()) {
+		return;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("bFireButtonPressed: %d"), bFireButtonPressed);
+
+	if (bFireButtonPressed && EquippedWeapon->bAutomatic) {
+		Fire();
+	}
+}
+
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -151,17 +173,28 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	}
 }
 
-void UCombatComponent::Fire(bool bPressed)
+void UCombatComponent::FireButtonPressed(bool bPressed)
 {
-	if (bPressed) {
+	bFireButtonPressed = bPressed;
 
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
+	UE_LOG(LogTemp, Error, TEXT("Pressed: %d"), bPressed);
+
+	if (bPressed && EquippedWeapon.IsValid()) {
+		Fire();
+	}
+}
+
+void UCombatComponent::Fire()
+{
+	if (bCanFire) {
+		bCanFire = false;
+		ServerFire(HitTarget);
 
 		if (EquippedWeapon.IsValid()) {
 			CrosshairShootingFactor = 0.75f;
 		}
+
+		StartFireTimer();
 	}
 }
 
@@ -216,6 +249,12 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 
 	if (bScrennToWorld) {
 		FVector Start{ CrosshairWorldPosition };
+
+		if (Character.IsValid()) {
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+		}
+
 		FVector End{ Start + CrosshairWorldDirection * TRACE_LENGTH };
 
 		GetWorld()->LineTraceSingleByChannel(
@@ -224,6 +263,13 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			End,
 			ECollisionChannel::ECC_Visibility
 		);
+
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>()) {
+			HUDPackage.CrosshairsColor = FLinearColor::Red;
+		}
+		else {
+			HUDPackage.CrosshairsColor = FLinearColor::White;
+		}
 
 		if (!TraceHitResult.bBlockingHit) {
 			TraceHitResult.ImpactPoint = End;

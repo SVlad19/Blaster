@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "HUD/BlasterHUD.h"
 #include "CombatComponent.generated.h"
 
 constexpr float TRACE_LENGTH = 80000.f;
@@ -27,7 +28,9 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	void SetAiming(bool bIsAiming);
-	void Fire(bool bPressed);
+	void FireButtonPressed(bool bPressed);
+
+	void Fire();
 
 	UFUNCTION(Server,Reliable)
 	void ServerSetAiming(bool bIsAiming);
@@ -75,10 +78,13 @@ private:
 	float CrosshairInAirFactor;
 	float CrosshairAimFactor;
 	float CrosshairShootingFactor;
+	FHUDPackage HUDPackage;
 
 	/**
 	* Aiming and FOV
 	*/
+
+	void InterpFOV(float DeltaTime);
 
 	// Field of view when not aiming; set to the camera`s base FOV in BeginPlay
 	float DefaultFOV;
@@ -90,6 +96,15 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float ZoomInterpSpeed= 20.f;
-	
-	void InterpFOV(float DeltaTime);
+
+	/*
+	* Automatic fire
+	*/
+
+	FTimerHandle FireTimer;
+
+	bool bCanFire = true;
+
+	void StartFireTimer();
+	void FireTimerFinished();
 };
