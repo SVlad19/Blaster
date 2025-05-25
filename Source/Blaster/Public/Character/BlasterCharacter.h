@@ -44,9 +44,6 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReatMontage();
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,6 +53,8 @@ protected:
 	void AimOffset(float DeltaTime);
 	void CalculateAO_Pitch();
 	void SimProxiesTurn();
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> CameraBoom;

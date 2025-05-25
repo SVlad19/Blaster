@@ -22,6 +22,9 @@ protected:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NoramlImpulse, const FHitResult& Hit);
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
 private:
 
 	UPROPERTY(VisibleAnywhere)

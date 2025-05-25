@@ -52,6 +52,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -104,11 +105,10 @@ void ABlasterCharacter::BeginPlay()
 			Subsystem->AddMappingContext(InputDataAsset->InputMapping.LoadSynchronous(), 0);
 		}
 	}
-}
 
-void ABlasterCharacter::MulticastHit_Implementation()
-{
-	PlayHitReatMontage();
+	if (HasAuthority()) {
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
 }
 
 float ABlasterCharacter::CalculateSpeed()
@@ -200,6 +200,18 @@ void ABlasterCharacter::SimProxiesTurn()
 		return;
 	}
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+
+}
+
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
+	if (BlasterPlayerController.IsValid()) {
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+
+	PlayHitReatMontage();
 
 }
 
@@ -449,6 +461,10 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 
 void ABlasterCharacter::OnRep_Health()
 {
+	if (BlasterPlayerController.IsValid()) {
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 
+	PlayHitReatMontage();
 }
 
