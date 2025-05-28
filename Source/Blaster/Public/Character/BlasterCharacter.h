@@ -35,6 +35,7 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace()const { return TurningInPlace; }
 	FORCEINLINE UCameraComponent* GetFollowCamera()const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone()const { return bRotateRootBone; }
+	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
@@ -43,6 +44,10 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReatMontage();
+	void PlayElimMontage();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Elim();
 
 protected:
 	virtual void BeginPlay() override;
@@ -76,6 +81,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TObjectPtr<class UAnimMontage> HitReactMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<class UAnimMontage> ElimMontage;
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
@@ -125,5 +133,7 @@ private:
 	float Health = 100.f;
 
 	TWeakObjectPtr<class ABlasterPlayerController> BlasterPlayerController;
+
+	bool bElimmed = false;
 
 };

@@ -18,6 +18,7 @@
 #include "Character/BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "GameMode/BlasterGameMode.h"
 
 
 ABlasterCharacter::ABlasterCharacter()
@@ -213,6 +214,14 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 	PlayHitReatMontage();
 
+	if (Health == 0.f) {
+		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		if (BlasterGameMode) {
+			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController.Get(), AttackerController);
+		}
+	}
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
@@ -265,6 +274,20 @@ void ABlasterCharacter::PlayHitReatMontage()
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void ABlasterCharacter::PlayElimMontage()
+{
+	TWeakObjectPtr<UAnimInstance> AnimInstance = MakeWeakObjectPtr(GetMesh()->GetAnimInstance());
+	if (AnimInstance.IsValid() && ElimMontage) {
+		AnimInstance->Montage_Play(ElimMontage);
+	}
+}
+
+void ABlasterCharacter::Elim_Implementation()
+{
+	bElimmed = true;
+	PlayElimMontage();
 }
 
 void ABlasterCharacter::PostInitializeComponents()
