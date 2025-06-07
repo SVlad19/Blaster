@@ -45,9 +45,10 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReatMontage();
 	void PlayElimMontage();
+	void Elim();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Elim();
+	void MulticastElim();
 
 protected:
 	virtual void BeginPlay() override;
@@ -125,9 +126,13 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health();
+	void ElimTimerFinished();
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
+	float ElimDelay = 3.f;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere ,Category = "Player Stats")
 	float Health = 100.f;
@@ -135,5 +140,7 @@ private:
 	TWeakObjectPtr<class ABlasterPlayerController> BlasterPlayerController;
 
 	bool bElimmed = false;
+	FTimerHandle ElimTimer;
+
 
 };
