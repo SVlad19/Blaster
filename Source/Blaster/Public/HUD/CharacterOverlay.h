@@ -21,4 +21,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> HealthText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> ScoreAmount;
 };

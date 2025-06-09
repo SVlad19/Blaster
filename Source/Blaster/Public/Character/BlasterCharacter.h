@@ -38,6 +38,8 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera()const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone()const { return bRotateRootBone; }
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
+	FORCEINLINE float GetHealth () const { return Health; }
+	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
 
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
@@ -63,6 +65,9 @@ protected:
 	void SimProxiesTurn();
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	
+	// Poll for any relevant classes and initialize our HUD
+	void PollInit();
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> CameraBoom;
@@ -181,4 +186,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class USoundCue> ElimBotSound;
+
+	TWeakObjectPtr<class ABlasterPlayerState> BlasterPlayerState;
 };
