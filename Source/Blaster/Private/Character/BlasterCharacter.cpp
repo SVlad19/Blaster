@@ -20,6 +20,9 @@
 #include "PlayerController/BlasterPlayerController.h"
 #include "GameMode/BlasterGameMode.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 
 ABlasterCharacter::ABlasterCharacter()
@@ -290,6 +293,10 @@ void ABlasterCharacter::PlayElimMontage()
 
 void ABlasterCharacter::Elim()
 {
+	if (Combat && Combat->EquippedWeapon.IsValid()) {
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
@@ -300,11 +307,57 @@ void ABlasterCharacter::Elim()
 
 }
 
+void ABlasterCharacter::MulticastElim_Implementation()
+{
+	bElimmed = true;
+	PlayElimMontage();
+
+	// Start dissolve effect
+	if (DissolveMaterialInstance) {
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+	}
+	StartDissolve();
+
+	// Disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController.IsValid()) {
+		DisableInput(BlasterPlayerController.Get());
+	}
+	// Disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Spawn elim bot
+	if (ElimBotEffect) {
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnPoint,
+			GetActorRotation()
+		);
+	}
+
+	if (ElimBotSound) {
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(),
+			ElimBotSound,
+			GetActorLocation()
+		);
+	}
+}
+
 void ABlasterCharacter::ElimTimerFinished()
 {
 	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
 	if (BlasterGameMode) {
 		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+	if (ElimBotComponent) {
+		ElimBotComponent->DestroyComponent();
 	}
 }
 
@@ -323,22 +376,6 @@ void ABlasterCharacter::StartDissolve()
 		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
 		DissolveTimeline->Play();
 	}
-}
-
-
-void ABlasterCharacter::MulticastElim_Implementation()
-{
-	bElimmed = true;
-	PlayElimMontage();
-
-	if (DissolveMaterialInstance) {
-		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
-
-		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
-	}
-	StartDissolve();
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -365,6 +402,15 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 
 	SimProxiesTurn();
 	TimeSinceLastMovementReplication = 0.f;
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (ElimBotComponent) {
+		ElimBotComponent->DestroyComponent();
+	}
 }
 
 bool ABlasterCharacter::IsWeaponEquipped()

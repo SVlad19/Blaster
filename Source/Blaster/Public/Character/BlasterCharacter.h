@@ -27,6 +27,7 @@ public:
 	virtual void PostInitializeComponents()override;
 	virtual void Jump() override;
 	virtual void OnRep_ReplicatedMovement() override;
+	virtual void Destroyed() override;
 
 	bool IsWeaponEquipped();
 	bool IsAiming();
@@ -168,4 +169,16 @@ private:
 
 	FOnTimelineFloat DissolveTrack;
 
+	/**
+	*	Elim bot
+	*/
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UParticleSystem> ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UParticleSystemComponent> ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class USoundCue> ElimBotSound;
 };

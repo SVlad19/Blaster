@@ -25,6 +25,7 @@ public:
 	AWeapon();
 	void ShowPickupWidget(bool bShowWidget);
 	void SetWeaponState(EWeaponState State);
+	void Dropped();
 
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }

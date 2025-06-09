@@ -224,6 +224,12 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon.IsValid() && Character.IsValid()) {
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+
+		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (HandSocket) {
+			HandSocket->AttachActor(EquippedWeapon.Get(), Character->GetMesh());
+		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
