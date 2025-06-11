@@ -23,5 +23,8 @@ public:
 	TObjectPtr<class UTextBlock> HealthText;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UTextBlock> ScoreAmount;
+	TObjectPtr<class UTextBlock> ScoreAmount;	
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> DefeatsAmount;
 };
