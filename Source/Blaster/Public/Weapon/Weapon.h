@@ -26,6 +26,7 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 	void SetWeaponState(EWeaponState State);
 	void Dropped();
+	void SetHUDAmmo();
 
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
@@ -77,6 +78,8 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
+	virtual void OnRep_Owner() override;
+
 
 	UFUNCTION()
 	virtual void OnSphereOverlap(
@@ -112,9 +115,23 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	void SpendRound();
+
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState)
 	EWeaponState WeaponState;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
+
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo;
+
+	UPROPERTY(EditAnywhere)
+	int32 MagCapacity;
+
+	TWeakObjectPtr<class ABlasterCharacter> BlasterOwnerCharacter;
+	TWeakObjectPtr<class ABlasterPlayerController> BlasterOwnerController;
 };

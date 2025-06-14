@@ -26,5 +26,8 @@ public:
 	TObjectPtr<class UTextBlock> ScoreAmount;	
 	
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UTextBlock> DefeatsAmount;
+	TObjectPtr<class UTextBlock> DefeatsAmount;	
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> WeaponAmmoAmount;
 };

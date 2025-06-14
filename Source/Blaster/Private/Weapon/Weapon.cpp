@@ -10,6 +10,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Weapon/Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 AWeapon::AWeapon()
 {
@@ -55,6 +56,42 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME(AWeapon, Ammo);
+}
+
+void AWeapon::SpendRound()
+{
+	Ammo--;
+	SetHUDAmmo();
+}
+
+void AWeapon::SetHUDAmmo()
+{
+	BlasterOwnerCharacter = BlasterOwnerCharacter.IsValid() ? BlasterOwnerCharacter : Cast<ABlasterCharacter>(GetOwner());
+	if (BlasterOwnerCharacter.IsValid()) {
+		BlasterOwnerController = BlasterOwnerController.IsValid() ? BlasterOwnerController : Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller);
+		if (BlasterOwnerController.IsValid()) {
+			BlasterOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void AWeapon::OnRep_Ammo()
+{
+	SetHUDAmmo();
+}
+
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	if (Owner == nullptr) {
+		BlasterOwnerCharacter.Reset();
+		BlasterOwnerController.Reset();
+	}
+	else {
+		SetHUDAmmo();
+	}
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -110,6 +147,8 @@ void AWeapon::Dropped()
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld,true);
 	WeaponMesh->DetachFromComponent(DetachRules);
 	SetOwner(nullptr);
+	BlasterOwnerCharacter.Reset();
+	BlasterOwnerController.Reset();
 }
 
 void AWeapon::Fire(const FVector& HitTarget)
@@ -131,6 +170,8 @@ void AWeapon::Fire(const FVector& HitTarget)
 			);
 		}
 	}
+
+	SpendRound();
 }
 
 void AWeapon::OnRep_WeaponState()
@@ -152,5 +193,3 @@ void AWeapon::OnRep_WeaponState()
 		break;
 	}
 }
-
-
