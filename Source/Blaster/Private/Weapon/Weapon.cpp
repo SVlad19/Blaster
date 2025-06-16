@@ -61,7 +61,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 
 void AWeapon::SpendRound()
 {
-	Ammo--;
+	Ammo = FMath::Clamp(--Ammo, 0, MagCapacity);
 	SetHUDAmmo();
 }
 

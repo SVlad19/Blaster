@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "WeaponTypes.h"
 #include "Weapon.generated.h"
 
 UENUM(BlueprintType)
@@ -32,6 +33,8 @@ public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV()const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed()const { return ZoomInterpSpeed; }
+	FORCEINLINE bool IsEmpty()const { return Ammo <= 0; }
+	FORCEINLINE EWeaponType GetWeaponType()const { return WeaponType; }
 
 	virtual void Fire(const FVector& HitTarget);
 
@@ -122,6 +125,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState)
 	EWeaponState WeaponState;
+
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;

@@ -24,6 +24,7 @@
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerState/BlasterPlayerState.h"
+#include "Weapon/WeaponTypes.h"
 
 
 ABlasterCharacter::ABlasterCharacter()
@@ -77,6 +78,15 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 			OverlappingWeapon->ShowPickupWidget(true);
 		}
 	}
+}
+
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	if (Combat == nullptr) {
+		return ECombatState::ECS_MAX;
+	}
+
+	return Combat->CombatState;
 }
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon()
@@ -274,6 +284,28 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 
 		FName SectionName;
 		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayReloadMontage()
+{
+	if (!Combat || !Combat->EquippedWeapon.IsValid()) {
+		return;
+	}
+
+	TWeakObjectPtr<UAnimInstance> AnimInstance = MakeWeakObjectPtr(GetMesh()->GetAnimInstance());
+	if (AnimInstance.IsValid() && ReloadMontage) {
+		AnimInstance->Montage_Play(ReloadMontage);
+
+		FName SectionName;
+		
+		switch (Combat->EquippedWeapon->GetWeaponType()) {
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		}
+
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -480,6 +512,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		Input->BindAction(InputDataAsset->CrouchInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Crouching);
 		Input->BindAction(InputDataAsset->AimInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming);
 		Input->BindAction(InputDataAsset->FireInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Fire);
+		Input->BindAction(InputDataAsset->ReloadInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Reload);
 	}
 }
 
@@ -553,6 +586,13 @@ void ABlasterCharacter::Fire(const FInputActionValue& Value)
 		const bool Pressed = Value.Get<bool>();
 
 		Combat->FireButtonPressed(Pressed);
+	}
+}
+
+void ABlasterCharacter::Reload(const FInputActionValue& Value)
+{
+	if (Combat) {
+		Combat->Reload();
 	}
 }
 

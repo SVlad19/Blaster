@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HUD/BlasterHUD.h"
+#include "Weapon/WeaponTypes.h"
+#include "BlasterTypes/CombatState.h"
 #include "CombatComponent.generated.h"
 
 constexpr float TRACE_LENGTH = 80000.f;
@@ -19,6 +21,10 @@ public:
 	UCombatComponent();
 	
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
 	friend class ABlasterCharacter;
 
@@ -39,7 +45,12 @@ protected:
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);	
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);	
+	
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+	
+	void HandleReload();
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
@@ -101,10 +112,38 @@ private:
 	* Automatic fire
 	*/
 
+	void StartFireTimer();
+	void FireTimerFinished();
+
+	bool CanFire()const;
+
 	FTimerHandle FireTimer;
 
 	bool bCanFire = true;
 
-	void StartFireTimer();
-	void FireTimerFinished();
+	/*
+	* Carried ammo
+	*/
+
+	void InitializeCarriedAmmo();
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	UFUNCTION()
+	void OnRep_CombatState();
+
+	// Carried ammo for the currently-equipped weapon
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 30;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+
 };

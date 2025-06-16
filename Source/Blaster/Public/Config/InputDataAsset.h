@@ -33,7 +33,10 @@ public:
 	TObjectPtr<UInputAction> AimInput;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> FireInput;
+	TObjectPtr<UInputAction> FireInput;	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ReloadInput;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TSoftObjectPtr<class UInputMappingContext> InputMapping;

@@ -7,6 +7,7 @@
 #include "BlasterTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
+#include "BlasterTypes/CombatState.h"
 #include "BlasterCharacter.generated.h"
 
 struct FInputActionValue;
@@ -40,6 +41,7 @@ public:
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 	FORCEINLINE float GetHealth () const { return Health; }
 	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
+	ECombatState GetCombatState()const;
 
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
@@ -47,6 +49,7 @@ public:
 	void TurnInPlace(float DeltaTime);
 
 	void PlayFireMontage(bool bAiming);
+	void PlayReloadMontage();
 	void PlayHitReatMontage();
 	void PlayElimMontage();
 	void Elim();
@@ -81,11 +84,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UWidgetComponent> OverheadWidget;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UCombatComponent> Combat;
+
+	/**
+	* Animation Montages
+	*/
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TObjectPtr<class UAnimMontage> FireWeaponMontage;
+
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<class UAnimMontage> ReloadMontage;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TObjectPtr<class UAnimMontage> HitReactMontage;
@@ -111,6 +122,7 @@ private:
 	void Crouching(const FInputActionValue& Value);
 	void Aiming(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
+	void Reload(const FInputActionValue& Value);
 	void HideCameraIfCharacterClose();
 	float CalculateSpeed();
 

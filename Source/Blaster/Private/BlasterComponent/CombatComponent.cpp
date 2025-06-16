@@ -14,6 +14,7 @@
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 
+
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -32,6 +33,9 @@ void UCombatComponent::BeginPlay()
 	if (Character->GetFollowCamera()) {
 		DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 		CurrentFOV = DefaultFOV;
+	}
+	if (Character->HasAuthority()) {
+		InitializeCarriedAmmo();
 	}
 }
 
@@ -154,12 +158,36 @@ void UCombatComponent::FireTimerFinished()
 	}
 }
 
+bool UCombatComponent::CanFire() const
+{
+	if (!EquippedWeapon.IsValid()) {
+		return false;
+	}
+
+	return !bCanFire || !EquippedWeapon->IsEmpty();
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	Controller = Controller.IsValid() ? Controller : Cast<ABlasterPlayerController>(Character->Controller);
+	if (Controller.IsValid()) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
+}
+
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)
@@ -185,7 +213,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if (bCanFire) {
+	if (CanFire()) {
 		bCanFire = false;
 		ServerFire(HitTarget);
 
@@ -302,9 +330,61 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	EquippedWeapon->SetOwner(Character.Get());
 	EquippedWeapon->SetHUDAmmo();
+
+	if (CarriedAmmoMap.Contains(EWeaponType::EWT_AssaultRifle)) {
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller.IsValid() ? Controller : Cast<ABlasterPlayerController>(Character->Controller);
+	if (Controller.IsValid()) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
 
+void UCombatComponent::Reload()
+{
+	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
+		ServerReload();
+	}
+}
 
+void UCombatComponent::FinishReloading()
+{
+	if (Character.IsValid() && Character->HasAuthority()) {
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+}
 
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (!Character.IsValid()) {
+		return;
+	}
+
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::HandleReload()
+{
+	Character->PlayReloadMontage();
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Unoccupied:
+		break;
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	case ECombatState::ECS_MAX:
+		break;
+	default:
+		break;
+	}
+}
