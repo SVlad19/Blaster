@@ -28,6 +28,7 @@ public:
 	void SetWeaponState(EWeaponState State);
 	void Dropped();
 	void SetHUDAmmo();
+	void AddAmmo(int32 AmmoToAdd);
 
 	FORCEINLINE class USphereComponent* GetAreaSphere()const { return AreaSphere.Get(); }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return WeaponMesh; }
@@ -35,6 +36,8 @@ public:
 	FORCEINLINE float GetZoomInterpSpeed()const { return ZoomInterpSpeed; }
 	FORCEINLINE bool IsEmpty()const { return Ammo <= 0; }
 	FORCEINLINE EWeaponType GetWeaponType()const { return WeaponType; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 
 	virtual void Fire(const FVector& HitTarget);
 
@@ -56,6 +59,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Croshairs")
 	TObjectPtr<UTexture2D> CrosshairsBottom;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class USoundCue> EquipSound;
 
 	/**
 	* Zoomed FOV while aiming

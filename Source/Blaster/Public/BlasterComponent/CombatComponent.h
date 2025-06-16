@@ -52,6 +52,8 @@ protected:
 	
 	void HandleReload();
 
+	int32 AmountToReload();
+
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
@@ -145,5 +147,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;
 
+
+	void UpdateAmmoValues();
 
 };

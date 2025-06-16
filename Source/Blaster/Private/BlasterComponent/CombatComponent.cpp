@@ -13,6 +13,7 @@
 #include "PlayerController/BlasterPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -151,10 +152,11 @@ void UCombatComponent::FireTimerFinished()
 		return;
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("bFireButtonPressed: %d"), bFireButtonPressed);
-
 	if (bFireButtonPressed && EquippedWeapon->bAutomatic) {
 		Fire();
+	}
+	if (EquippedWeapon->IsEmpty()) {
+		Reload();
 	}
 }
 
@@ -164,7 +166,7 @@ bool UCombatComponent::CanFire() const
 		return false;
 	}
 
-	return !bCanFire || !EquippedWeapon->IsEmpty();
+	return bCanFire && !EquippedWeapon->IsEmpty() && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()
@@ -241,8 +243,10 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	if (Character.IsValid() && EquippedWeapon.IsValid()) {
-
+	if (Character.IsValid() &&
+		EquippedWeapon.IsValid() &&
+		CombatState == ECombatState::ECS_Unoccupied)
+	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
@@ -259,6 +263,15 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+
+		if (EquippedWeapon->EquipSound) {
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				EquippedWeapon->EquipSound,
+				Character->GetActorLocation()
+			);
+		}
+
 	}
 }
 
@@ -331,13 +344,25 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetOwner(Character.Get());
 	EquippedWeapon->SetHUDAmmo();
 
-	if (CarriedAmmoMap.Contains(EWeaponType::EWT_AssaultRifle)) {
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 
 	Controller = Controller.IsValid() ? Controller : Cast<ABlasterPlayerController>(Character->Controller);
 	if (Controller.IsValid()) {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	if (EquippedWeapon->EquipSound) {
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			EquippedWeapon->EquipSound,
+			Character->GetActorLocation()
+		);
+	}
+
+	if (EquippedWeapon->IsEmpty()) {
+		Reload();
 	}
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -355,6 +380,10 @@ void UCombatComponent::FinishReloading()
 {
 	if (Character.IsValid() && Character->HasAuthority()) {
 		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
+	}
+	if (bFireButtonPressed) {
+		Fire();
 	}
 }
 
@@ -368,9 +397,45 @@ void UCombatComponent::ServerReload_Implementation()
 	HandleReload();
 }
 
+void UCombatComponent::UpdateAmmoValues()
+{
+	if (!EquippedWeapon.IsValid()) {
+		return;
+	}
+
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller.IsValid() ? Controller : Cast<ABlasterPlayerController>(Character->Controller);
+	if (Controller.IsValid()) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	EquippedWeapon->AddAmmo(-ReloadAmount);
+}
+
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReloadMontage();
+}
+
+int32 UCombatComponent::AmountToReload()
+{
+	if (!EquippedWeapon.IsValid()) {
+		return 0;
+	}
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		int32 Least = FMath::Min(RoomInMag, AmountCarried);
+		return FMath::Clamp(RoomInMag, 0, Least);
+	}
+
+	return 0;
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -378,6 +443,9 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed) {
+			Fire();
+		}
 		break;
 	case ECombatState::ECS_Reloading:
 		HandleReload();
