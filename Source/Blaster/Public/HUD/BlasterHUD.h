@@ -27,6 +27,8 @@ class BLASTER_API ABlasterHUD : public AHUD
 	
 public:
 	virtual void DrawHUD()override;
+	void AddCharacterOverlay();
+	void AddAnnouncement();
 
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) {
 		HUDPackage = Package;
@@ -35,12 +37,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
 
-	TObjectPtr<class UCharacterOverlay> CharacterOverlay;
+	TObjectPtr<class UCharacterOverlay> CharacterOverlay;	
+	
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	TSubclassOf<class UUserWidget> AnnouncementClass;
+
+	TObjectPtr<class UAnnouncement> Announcement;
 
 protected:
 
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
 
 private:
 	

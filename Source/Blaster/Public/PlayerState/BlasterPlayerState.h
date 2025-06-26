@@ -21,6 +21,7 @@ public:
 	* Replication
 	*/
 	virtual void OnRep_Score()override;
+
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
@@ -28,7 +29,6 @@ public:
 	void AddToDefeats(int32 DefeatsAmount);
 
 private:
-
 
 	TWeakObjectPtr<class ABlasterCharacter> Character;
 	TWeakObjectPtr<class ABlasterPlayerController> Controller;

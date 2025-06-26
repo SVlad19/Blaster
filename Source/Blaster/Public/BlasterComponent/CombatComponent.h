@@ -25,6 +25,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+	void FireButtonPressed(bool bPressed);
 
 	friend class ABlasterCharacter;
 
@@ -34,7 +35,6 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	void SetAiming(bool bIsAiming);
-	void FireButtonPressed(bool bPressed);
 
 	void Fire();
 

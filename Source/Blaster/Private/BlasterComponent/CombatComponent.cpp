@@ -206,8 +206,6 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
-	UE_LOG(LogTemp, Error, TEXT("Pressed: %d"), bPressed);
-
 	if (bPressed && EquippedWeapon.IsValid()) {
 		Fire();
 	}

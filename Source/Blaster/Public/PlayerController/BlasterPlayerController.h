@@ -23,13 +23,17 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void OnPossess(APawn* InPawn) override;
 	void SetHUDMatchCountdown(float CountdownTime);
-	void SetHUDTime();
+	void SetHUDAnnouncementCountdown(float CountdownTime);
 	virtual float GetServerTime(); // Synced with server world clock
 	virtual void ReceivedPlayer() override; // Sync with server clock as soon as possible
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
+	void OnMatchStateSet(FName State);
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	void SetHUDTime();
+	void PollInit();
 
 	/*
 	* Sync time between client and server
@@ -45,6 +49,12 @@ protected:
 
 	void CheckTimeSync(float DeltaTime);
 
+	UFUNCTION(Server,Reliable)
+	void ServerCheckMatchState();	
+	
+	UFUNCTION(Client,Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
+
 	float ClientServerDelta = 0.f; // difference between client and server time
 
 	UPROPERTY(EditAnywhere, Category = "Time")
@@ -52,8 +62,30 @@ protected:
 
 	float TimeSyncRunningTime = 0.f;
 private:
+
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	void HandleMatchHasStarted();
+	void HandleCooldown();
+
 	TObjectPtr<class ABlasterHUD> BlasterHUD;
 
-	float MatchTime = 120.f;
+	float LevelStartingTime = 0.f;
+	float MatchTime = 0.f;
 	uint32 CountdownInt = 0;
+	float WarmupTime = 0.f;
+	float CooldownTime = 0.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	FName MatchState;
+	TWeakObjectPtr<class UCharacterOverlay> CharacterOverlay;
+
+	TWeakObjectPtr<class ABlasterGameMode> BlasterGameMode;
+
+	bool bInitializeCharacterOverlay = false;
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	int32 HUDDefeats;
 };

@@ -24,6 +24,7 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
+	void RotateInPlace(float DeltaTime);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	virtual void PostInitializeComponents()override;
 	virtual void Jump() override;
@@ -41,6 +42,8 @@ public:
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 	FORCEINLINE float GetHealth () const { return Health; }
 	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
+	FORCEINLINE bool GetDisableGameplay()const { return bDisableGameplay; }
+	FORCEINLINE class UCombatComponent* GetCombat()const { return Combat; }
 	ECombatState GetCombatState()const;
 
 	AWeapon* GetEquippedWeapon();
@@ -57,8 +60,12 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController);
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
