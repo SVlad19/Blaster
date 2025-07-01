@@ -135,6 +135,8 @@ private:
 	UFUNCTION()
 	void OnRep_CombatState();
 
+	void UpdateAmmoValues();
+
 	// Carried ammo for the currently-equipped weapon
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
@@ -155,8 +157,5 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;
-
-
-	void UpdateAmmoValues();
 
 };
