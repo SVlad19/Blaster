@@ -24,79 +24,85 @@ void AHitScanWeapon::Fire(const FVector& HitTarget) {
 	if (MuzzleFlashSocket) {
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
-		FVector End = Start + (HitTarget - Start) * 1.25f;
 
 		FHitResult FireHit;
-		UWorld* World = GetWorld();
-		if (World) {
-			World->LineTraceSingleByChannel(
-				FireHit,
+		WeaponTraceHit(Start, HitTarget, FireHit);
+
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
+		if (BlasterCharacter && HasAuthority() && IntigatorController) {
+			UGameplayStatics::ApplyDamage(
+				BlasterCharacter,
+				Damage,
+				IntigatorController,
+				this,
+				UDamageType::StaticClass());
+		}
+
+		if (ImpactPaticles) {
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				ImpactPaticles,
+				FireHit.ImpactPoint,
+				FireHit.ImpactNormal.Rotation()
+			);
+		}
+
+		if (HitSound) {
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				HitSound,
+				FireHit.ImpactPoint
+			);
+		}
+
+		if (MuzzleFlash) {
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				MuzzleFlash,
+				SocketTransform
+			);
+		}
+
+		if (FireSound) {
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				FireSound,
+				GetActorLocation()
+			);
+		}
+	}
+}
+
+void AHitScanWeapon::WeaponTraceHit(const FVector& Start, const FVector& HitTarget, FHitResult& OutHit)
+{
+	UWorld* World = GetWorld();
+	if (World) {
+		FVector End = bUseScatter ? TraceEndWithScatter(Start, HitTarget) : Start + (HitTarget - Start) * 1.25f;
+
+		World->LineTraceSingleByChannel(
+			OutHit,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+		);
+
+		FVector BeamEnd = End;
+		if (OutHit.bBlockingHit) {
+			BeamEnd = OutHit.ImpactPoint;
+		}
+
+		if (BeamPaticles) {
+			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+				World,
+				BeamPaticles,
 				Start,
-				End,
-				ECollisionChannel::ECC_Visibility
+				FRotator::ZeroRotator,
+				true
 			);
 
-			FVector BeamEnd = End;
-
-			if (FireHit.bBlockingHit) {
-				BeamEnd = FireHit.ImpactPoint;
-
-				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-				if (BlasterCharacter && HasAuthority() && IntigatorController) {
-					UGameplayStatics::ApplyDamage(
-						BlasterCharacter,
-						Damage,
-						IntigatorController,
-						this,
-						UDamageType::StaticClass());
-				}
-
-				if (ImpactPaticles) {
-					UGameplayStatics::SpawnEmitterAtLocation(
-						World,
-						ImpactPaticles,
-						FireHit.ImpactPoint,
-						FireHit.ImpactNormal.Rotation()
-					);
-				}
-
-				if (HitSound) {
-					UGameplayStatics::PlaySoundAtLocation(
-						this,
-						HitSound,
-						FireHit.ImpactPoint
-					);
-				}
+			if (Beam) {
+				Beam->SetVectorParameter(FName("Target"), BeamEnd);
 			}
-
-			if (BeamPaticles) {
-				UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
-					World,
-					BeamPaticles,
-					SocketTransform
-				);
-
-				if (Beam) {
-					Beam->SetVectorParameter(FName("Target"), BeamEnd);
-				}
-			}
-
-			if (MuzzleFlash) {
-				UGameplayStatics::SpawnEmitterAtLocation(
-					World,
-					MuzzleFlash,
-					SocketTransform
-				);
-			}
-
-			if (FireSound) {
-				UGameplayStatics::PlaySoundAtLocation(
-					this,
-					FireSound,
-					GetActorLocation()
-				);
-			}
-
 		}
 	}
 }
@@ -109,9 +115,9 @@ FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVe
 	FVector EndLoc = SphereCenter + RandVec;
 	FVector ToEndLoc = EndLoc - TraceStart;
 
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	DrawDebugLine(GetWorld(), TraceStart, FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()), FColor::Cyan, true);
+	//DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	//DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	//DrawDebugLine(GetWorld(), TraceStart, FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()), FColor::Cyan, true);
 
 	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
