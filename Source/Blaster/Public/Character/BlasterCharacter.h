@@ -44,6 +44,7 @@ public:
 	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
 	FORCEINLINE bool GetDisableGameplay()const { return bDisableGameplay; }
 	FORCEINLINE class UCombatComponent* GetCombat()const { return Combat; }
+	FORCEINLINE UAnimMontage* GetReloadMontage()const { return ReloadMontage; }
 	ECombatState GetCombatState()const;
 
 	AWeapon* GetEquippedWeapon();

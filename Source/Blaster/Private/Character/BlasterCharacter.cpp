@@ -314,8 +314,8 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 		return;
 	}
 
-	TWeakObjectPtr<UAnimInstance> AnimInstance = MakeWeakObjectPtr(GetMesh()->GetAnimInstance());
-	if (AnimInstance.IsValid() && FireWeaponMontage) {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage) {
 		AnimInstance->Montage_Play(FireWeaponMontage);
 
 		FName SectionName;

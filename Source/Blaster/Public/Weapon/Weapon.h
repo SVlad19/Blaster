@@ -35,6 +35,7 @@ public:
 	FORCEINLINE float GetZoomedFOV()const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed()const { return ZoomInterpSpeed; }
 	FORCEINLINE bool IsEmpty()const { return Ammo <= 0; }
+	FORCEINLINE bool IsFull()const { return Ammo == MagCapacity; }
 	FORCEINLINE EWeaponType GetWeaponType()const { return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
@@ -62,6 +63,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class USoundCue> EquipSound;
+
+	/*
+	* Enable or disable custom depth
+	*/
+
+	void EnableCusomDepth(bool bEnable);
 
 	/**
 	* Zoomed FOV while aiming

@@ -1,6 +1,9 @@
 #pragma once
 
 constexpr float TRACE_LENGTH = 80000.f;
+constexpr uint32 CUSTOM_DEPTH_PURPLE = 250;
+constexpr uint32 CUSTOM_DEPTH_BLUE = 251;
+constexpr uint32 CUSTOM_DEPTH_TAN = 252;
 
 UENUM(BlueprintType)
 enum class EWeaponType : uint8 {
