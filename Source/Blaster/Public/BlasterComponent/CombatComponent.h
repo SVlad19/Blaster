@@ -30,6 +30,15 @@ public:
 
 	void JumpToShotgunEnd();
 
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	UFUNCTION(Server,Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize Target);
+
 	friend class ABlasterCharacter;
 
 protected:
@@ -38,8 +47,14 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 	void SetAiming(bool bIsAiming);
-
+	void DropEquippedWeapon();
 	void Fire();
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void UpdateCarriedAmmo();
+	void PlayEquipWeaponSound();
+	void ReloadEmptyWeapon();
+	void ShowAttachedGrenade(bool bShowGrenade);
 
 	UFUNCTION(Server,Reliable)
 	void ServerSetAiming(bool bIsAiming);
@@ -64,11 +79,19 @@ protected:
 
 	void SetHUDCrosshairs(float DeltaTime);
 
+	void ThrowGrenade();
+
+	UFUNCTION(Server,Reliable)
+	void ServerThrowGreande();
+
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;
 
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> GrenadeClass;
 
 private:
 

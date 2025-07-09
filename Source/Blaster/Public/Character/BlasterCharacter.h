@@ -45,6 +45,7 @@ public:
 	FORCEINLINE bool GetDisableGameplay()const { return bDisableGameplay; }
 	FORCEINLINE class UCombatComponent* GetCombat()const { return Combat; }
 	FORCEINLINE UAnimMontage* GetReloadMontage()const { return ReloadMontage; }
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade()const { return AttachedGrenade; }
 	ECombatState GetCombatState()const;
 
 	AWeapon* GetEquippedWeapon();
@@ -56,6 +57,7 @@ public:
 	void PlayReloadMontage();
 	void PlayHitReatMontage();
 	void PlayElimMontage();
+	void PlayThrowGrenadeMontage();
 	void Elim();
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -116,6 +118,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TObjectPtr<class UAnimMontage> ElimMontage;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<class UAnimMontage> ThrowGrenadeMontage;
+
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
@@ -126,6 +131,13 @@ protected:
 	float ProxyYaw;
 	float TimeSinceLastMovementReplication;
 
+	/*
+	* Grenade
+	*/
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> AttachedGrenade;
+
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -135,6 +147,8 @@ private:
 	void Aiming(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Reload(const FInputActionValue& Value);
+	void ThrowGrenade(const FInputActionValue& Value);
+
 	void HideCameraIfCharacterClose();
 	float CalculateSpeed();
 

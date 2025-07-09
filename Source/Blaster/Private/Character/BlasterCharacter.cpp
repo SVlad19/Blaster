@@ -63,6 +63,9 @@ ABlasterCharacter::ABlasterCharacter()
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
 
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Attached Grenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -87,6 +90,9 @@ void ABlasterCharacter::BeginPlay()
 
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
+	if (AttachedGrenade) {
+		AttachedGrenade->SetVisibility(false);
 	}
 }
 
@@ -387,6 +393,14 @@ void ABlasterCharacter::PlayElimMontage()
 	}
 }
 
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	TWeakObjectPtr<UAnimInstance> AnimInstance = MakeWeakObjectPtr(GetMesh()->GetAnimInstance());
+	if (AnimInstance.IsValid() && ThrowGrenadeMontage) {
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
+
 void ABlasterCharacter::Elim()
 {
 	if (Combat && Combat->EquippedWeapon.IsValid()) {
@@ -582,6 +596,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		Input->BindAction(InputDataAsset->AimInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming);
 		Input->BindAction(InputDataAsset->FireInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Fire);
 		Input->BindAction(InputDataAsset->ReloadInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::Reload);
+		Input->BindAction(InputDataAsset->ThrowGrenadeInput, ETriggerEvent::Triggered, this, &ABlasterCharacter::ThrowGrenade);
 	}
 }
 
@@ -687,6 +702,13 @@ void ABlasterCharacter::Reload(const FInputActionValue& Value)
 
 	if (Combat) {
 		Combat->Reload();
+	}
+}
+
+void ABlasterCharacter::ThrowGrenade(const FInputActionValue& Value)
+{
+	if (Combat) {
+		Combat->ThrowGrenade();
 	}
 }
 
