@@ -120,8 +120,19 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 }
 
+void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
+{
+	if (Character.IsValid() && Character->GetAttachedGrenade()) {
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
+	}
+}
+
 void UCombatComponent::ThrowGrenade()
 {
+	if (Grenades == 0) {
+		return;
+	}
+
 	if (CombatState != ECombatState::ECS_Unoccupied || !EquippedWeapon.IsValid()) {
 		return;
 	}
@@ -135,22 +146,34 @@ void UCombatComponent::ThrowGrenade()
 	if (Character.IsValid() && !Character->HasAuthority()) {
 		ServerThrowGreande();
 	}
-}
-
-void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
-{
-	if (Character.IsValid() && Character->GetAttachedGrenade()) {
-		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
+	if (Character.IsValid() && Character->HasAuthority()) {
+		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+		UpdateHUDGrenades();
 	}
 }
 
 void UCombatComponent::ServerThrowGreande_Implementation()
 {
+	if (Grenades == 0) {
+		return;
+	}
+
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character.IsValid()) {
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon.Get());
 		ShowAttachedGrenade(true);
+	}
+
+	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+	UpdateHUDGrenades();
+}
+
+void UCombatComponent::UpdateHUDGrenades()
+{
+	Controller = Controller.IsValid() ? Controller : MakeWeakObjectPtr(Cast<ABlasterPlayerController>(Character->GetController()));
+	if (Controller.IsValid()) {
+		Controller->SetHUDGrenades(Grenades);
 	}
 }
 
@@ -224,6 +247,11 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	}
 }
 
+void UCombatComponent::OnRep_Grenades()
+{
+	UpdateHUDGrenades();
+}
+
 void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
@@ -242,6 +270,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME(UCombatComponent, Grenades);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 

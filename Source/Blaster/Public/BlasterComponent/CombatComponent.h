@@ -39,6 +39,8 @@ public:
 	UFUNCTION(Server,Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize Target);
 
+	FORCEINLINE int32 GetGrenades()const { return Grenades; }
+
 	friend class ABlasterCharacter;
 
 protected:
@@ -161,8 +163,12 @@ private:
 	UFUNCTION()
 	void OnRep_CombatState();
 
+	UFUNCTION()
+	void OnRep_Grenades();
+
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
+	void UpdateHUDGrenades();
 
 	// Carried ammo for the currently-equipped weapon
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
@@ -190,6 +196,12 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;

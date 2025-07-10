@@ -24,10 +24,13 @@ public:
 	void OnPossess(APawn* InPawn) override;
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
+	void SetHUDGrenades(int32 Grenades);
+	void OnMatchStateSet(FName State);
+
 	virtual float GetServerTime(); // Synced with server world clock
 	virtual void ReceivedPlayer() override; // Sync with server clock as soon as possible
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
-	void OnMatchStateSet(FName State);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -88,4 +91,5 @@ private:
 	float HUDMaxHealth;
 	float HUDScore;
 	int32 HUDDefeats;
+	int32 HUDGrenades;
 };
