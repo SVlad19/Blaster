@@ -39,6 +39,8 @@ public:
 	UFUNCTION(Server,Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize Target);
 
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+
 	FORCEINLINE int32 GetGrenades()const { return Grenades; }
 
 	friend class ABlasterCharacter;
@@ -175,6 +177,9 @@ private:
 	int32 CarriedAmmo;
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxCarriedAmmo = 500;
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
