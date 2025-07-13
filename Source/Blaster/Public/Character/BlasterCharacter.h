@@ -41,9 +41,11 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone()const { return bRotateRootBone; }
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 	FORCEINLINE float GetHealth () const { return Health; }
+	FORCEINLINE void SetHealth (float Amount) { Health = Amount; }
 	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
 	FORCEINLINE bool GetDisableGameplay()const { return bDisableGameplay; }
 	FORCEINLINE class UCombatComponent* GetCombat()const { return Combat; }
+	FORCEINLINE class UBuffComponent* GetBuff()const { return Buff; }
 	FORCEINLINE UAnimMontage* GetReloadMontage()const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade()const { return AttachedGrenade; }
 	ECombatState GetCombatState()const;
@@ -59,6 +61,7 @@ public:
 	void PlayElimMontage();
 	void PlayThrowGrenadeMontage();
 	void Elim();
+	void UpdateHUDHealth();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
@@ -99,7 +102,10 @@ protected:
 	TObjectPtr<class UWidgetComponent> OverheadWidget;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UCombatComponent> Combat;
+	TObjectPtr<class UCombatComponent> Combat;	
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UBuffComponent> Buff;
 
 	/**
 	* Animation Montages
@@ -170,7 +176,7 @@ private:
 	*/
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float LastHealth);
 	void ElimTimerFinished();
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")

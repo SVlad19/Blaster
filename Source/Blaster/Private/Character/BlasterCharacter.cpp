@@ -25,6 +25,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerState/BlasterPlayerState.h"
 #include "Weapon/WeaponTypes.h"
+#include "BlasterComponent/BuffComponent.h"
 
 
 ABlasterCharacter::ABlasterCharacter()
@@ -49,6 +50,9 @@ ABlasterCharacter::ABlasterCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
@@ -512,6 +516,7 @@ void ABlasterCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	Combat->Character = MakeWeakObjectPtr(this);
+	Buff->Character = MakeWeakObjectPtr(this);
 }
 
 void ABlasterCharacter::Jump()
@@ -754,11 +759,19 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-void ABlasterCharacter::OnRep_Health()
+void ABlasterCharacter::OnRep_Health(float LastHealth)
+{
+	UpdateHUDHealth();
+
+	if (Health < LastHealth) {
+		PlayHitReatMontage();
+	}
+
+}
+
+void ABlasterCharacter::UpdateHUDHealth()
 {
 	if (BlasterPlayerController.IsValid()) {
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
 	}
-
-	PlayHitReatMontage();
 }
