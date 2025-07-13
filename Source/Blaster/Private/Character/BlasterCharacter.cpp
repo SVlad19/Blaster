@@ -515,8 +515,14 @@ void ABlasterCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	Combat->Character = MakeWeakObjectPtr(this);
-	Buff->Character = MakeWeakObjectPtr(this);
+	if (Combat) {
+		Combat->Character = MakeWeakObjectPtr(this);
+	}
+
+	if (Buff) {
+		Buff->Character = MakeWeakObjectPtr(this);
+		Buff->SetInitialSpeeds(GetCharacterMovement()->MaxWalkSpeed, GetCharacterMovement()->MaxWalkSpeedCrouched);
+	}
 }
 
 void ABlasterCharacter::Jump()

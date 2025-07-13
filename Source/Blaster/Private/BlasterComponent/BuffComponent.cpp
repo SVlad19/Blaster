@@ -3,6 +3,7 @@
 
 #include "BlasterComponent/BuffComponent.h"
 #include "Character/BlasterCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UBuffComponent::UBuffComponent()
 {
@@ -18,12 +19,56 @@ void UBuffComponent::BeginPlay()
 	
 }
 
+void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
+{
+	InitialBaseSpeed = BaseSpeed;
+	InitialCrouchSpeed = CrouchSpeed;
+}
+
 void UBuffComponent::Heal(float HealAmount, float HealingTime)
 {
 	bHealing = true;
 
 	HealingRate = HealAmount / HealingTime;
 	AmountToHeal += HealAmount;
+}
+
+void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
+{
+	if (!Character.IsValid()) {
+		return;
+	}
+
+	Character->GetWorldTimerManager().SetTimer(
+		SpeedBuffTimer,
+		this,
+		&ThisClass::ResetSpeeds,
+		BuffTime
+	);
+
+	if (Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->MaxWalkSpeed = BuffBaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = BuffCrouchSpeed;
+	}
+
+	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed);
+}
+
+void UBuffComponent::ResetSpeeds()
+{
+	if (Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->MaxWalkSpeed = InitialBaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
+		MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed);
+	}
+}
+
+void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CrouchSpeed)
+{
+	if (Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	}
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime)
