@@ -522,6 +522,7 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Buff) {
 		Buff->Character = MakeWeakObjectPtr(this);
 		Buff->SetInitialSpeeds(GetCharacterMovement()->MaxWalkSpeed, GetCharacterMovement()->MaxWalkSpeedCrouched);
+		Buff->SetInitialJumpVelocity(GetCharacterMovement()->JumpZVelocity);
 	}
 }
 

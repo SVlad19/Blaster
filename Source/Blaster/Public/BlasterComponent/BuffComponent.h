@@ -17,7 +17,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void Heal(float HealAmount, float HealingTime);
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
+	void BuffJump(float BuffJumpVelocity, float BuffTime);
 	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
+	void SetInitialJumpVelocity(float Velocity);
 
 	friend class ABlasterCharacter;
 protected:
@@ -45,4 +47,17 @@ private:
 	FTimerHandle SpeedBuffTimer;
 	float InitialBaseSpeed;
 	float InitialCrouchSpeed;
+
+	/*
+	* Jump buff
+	*/
+
+	void ResetJump();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastJumpBuff(float JumpVelocity);
+
+	FTimerHandle JumpBuffTimer;
+	float InitialJumpVelocity;
+
+
 };
