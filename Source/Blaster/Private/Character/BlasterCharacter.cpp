@@ -79,18 +79,19 @@ void ABlasterCharacter::BeginPlay()
 	check(InputDataAsset);
 	check(Combat);
 
-	if (!HasAuthority()) {
-		BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
 
-		if (BlasterPlayerController.IsValid()) {
-			BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	if (BlasterPlayerController.IsValid()) {
 
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(BlasterPlayerController->GetLocalPlayer())) {
-				Subsystem->AddMappingContext(InputDataAsset->InputMapping.LoadSynchronous(), 0);
-			}
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(BlasterPlayerController->GetLocalPlayer())) {
+			Subsystem->AddMappingContext(InputDataAsset->InputMapping.LoadSynchronous(), 0);
 		}
 	}
+
+	UpdateHUDHealth();
+	UpdateHUDShield();
+
 
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
@@ -107,7 +108,7 @@ void ABlasterCharacter::PossessedBy(AController* NewController)
 	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
 
 	if (BlasterPlayerController.IsValid()) {
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+		UpdateHUDHealth();
 
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(BlasterPlayerController->GetLocalPlayer())) {
@@ -131,6 +132,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_AutonomousOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, Shield);
 	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
@@ -272,11 +274,22 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 		return;
 	}
 
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-
-	if (BlasterPlayerController.IsValid()) {
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	float DamageToHealth = Damage;
+	if (Shield > 0.f) {
+		if (Shield >= Damage) {
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else {
+			Shield = 0.f;
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+		}
 	}
+
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+
+	UpdateHUDHealth();
+	UpdateHUDShield();
 
 	PlayHitReatMontage();
 
@@ -349,26 +362,26 @@ void ABlasterCharacter::PlayReloadMontage()
 		AnimInstance->Montage_Play(ReloadMontage);
 
 		FName SectionName;
-		
+
 		switch (Combat->EquippedWeapon->GetWeaponType()) {
 		case EWeaponType::EWT_AssaultRifle:
 			SectionName = FName("Rifle");
 			break;
 		case EWeaponType::EWT_RocketLauncher:
 			SectionName = FName("RocketLauncher");
-			break;	
+			break;
 		case EWeaponType::EWT_Pistol:
 			SectionName = FName("Pistol");
-			break;	
+			break;
 		case EWeaponType::EWT_SubmachineGun:
 			SectionName = FName("Pistol");
-			break;	
+			break;
 		case EWeaponType::EWT_Shotgun:
 			SectionName = FName("Shotgun");
-			break;	
+			break;
 		case EWeaponType::EWT_SniperRifle:
 			SectionName = FName("SniperRifle");
-			break;	
+			break;
 		case EWeaponType::EWT_GrenadeLauncher:
 			SectionName = FName("GrenadeLauncher");
 			break;
@@ -773,12 +786,28 @@ void ABlasterCharacter::OnRep_Health(float LastHealth)
 	if (Health < LastHealth) {
 		PlayHitReatMontage();
 	}
+}
 
+
+void ABlasterCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+
+	if (Shield < LastShield) {
+		PlayHitReatMontage();
+	}
 }
 
 void ABlasterCharacter::UpdateHUDHealth()
 {
 	if (BlasterPlayerController.IsValid()) {
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void ABlasterCharacter::UpdateHUDShield()
+{
+	if (BlasterPlayerController.IsValid()) {
+		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }

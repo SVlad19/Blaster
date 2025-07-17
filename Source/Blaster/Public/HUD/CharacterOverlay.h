@@ -20,7 +20,13 @@ public:
 	TObjectPtr<class UProgressBar> HealthBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UTextBlock> HealthText;
+	TObjectPtr<class UTextBlock> HealthText;	
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UProgressBar> ShieldBar;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> ShieldText;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> ScoreAmount;	

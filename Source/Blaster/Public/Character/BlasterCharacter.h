@@ -43,6 +43,9 @@ public:
 	FORCEINLINE float GetHealth () const { return Health; }
 	FORCEINLINE void SetHealth (float Amount) { Health = Amount; }
 	FORCEINLINE float GetMaxHealth () const { return MaxHealth; }
+	FORCEINLINE float GetShield() const { return Shield; }
+	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
+	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	FORCEINLINE bool GetDisableGameplay()const { return bDisableGameplay; }
 	FORCEINLINE class UCombatComponent* GetCombat()const { return Combat; }
 	FORCEINLINE class UBuffComponent* GetBuff()const { return Buff; }
@@ -62,6 +65,7 @@ public:
 	void PlayThrowGrenadeMontage();
 	void Elim();
 	void UpdateHUDHealth();
+	void UpdateHUDShield();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
@@ -182,11 +186,24 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
 
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	/*
+	* Player Shield
+	*/
+
+	UFUNCTION()
+	void OnRep_Shield(float LastShield);
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxShield = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Shield, EditAnywhere, Category = "Player Stats")
+	float Shield = 0.f;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float ElimDelay = 3.f;
-
-	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere ,Category = "Player Stats")
-	float Health = 100.f;
 
 	TWeakObjectPtr<class ABlasterPlayerController> BlasterPlayerController;
 
