@@ -632,8 +632,6 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%d"), bDisableGameplay);
-
 	if (bDisableGameplay) {
 		return;
 	}
