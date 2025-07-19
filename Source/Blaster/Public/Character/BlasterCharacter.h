@@ -66,6 +66,8 @@ public:
 	void Elim();
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void UpdateHUDAmmo();
+	void SpawnDefaultWeapon();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
@@ -147,6 +149,13 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> AttachedGrenade;
+
+	/*
+	* Default weapon
+	*/
+
+	UPROPERTY(EditAnywhere) 
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 private:
 	void Move(const FInputActionValue& Value);

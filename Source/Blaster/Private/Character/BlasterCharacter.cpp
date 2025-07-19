@@ -81,6 +81,8 @@ void ABlasterCharacter::BeginPlay()
 
 	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
 
+	SpawnDefaultWeapon();
+
 	if (BlasterPlayerController.IsValid()) {
 
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -91,7 +93,7 @@ void ABlasterCharacter::BeginPlay()
 
 	UpdateHUDHealth();
 	UpdateHUDShield();
-
+	UpdateHUDAmmo();
 
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
@@ -109,6 +111,8 @@ void ABlasterCharacter::PossessedBy(AController* NewController)
 
 	if (BlasterPlayerController.IsValid()) {
 		UpdateHUDHealth();
+		UpdateHUDShield();
+		UpdateHUDAmmo();
 
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(BlasterPlayerController->GetLocalPlayer())) {
@@ -425,7 +429,12 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 void ABlasterCharacter::Elim()
 {
 	if (Combat && Combat->EquippedWeapon.IsValid()) {
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon) {
+			Combat->EquippedWeapon->Destroy();
+		}
+		else {
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 
 	MulticastElim();
@@ -807,5 +816,28 @@ void ABlasterCharacter::UpdateHUDShield()
 {
 	if (BlasterPlayerController.IsValid()) {
 		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void ABlasterCharacter::UpdateHUDAmmo()
+{
+	if (BlasterPlayerController.IsValid() && Combat && Combat->EquippedWeapon.IsValid()) {
+		BlasterPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		BlasterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+	}
+}
+
+void ABlasterCharacter::SpawnDefaultWeapon()
+{
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+
+	if (BlasterGameMode && World && !bElimmed && DefaultWeaponClass) {
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
+
+		if (Combat) {
+			Combat->EquipWeapon(StartingWeapon);
+		}
 	}
 }

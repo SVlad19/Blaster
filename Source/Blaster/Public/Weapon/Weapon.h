@@ -63,6 +63,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class USoundCue> EquipSound;
+	bool bDestroyWeapon = false;
 
 	/*
 	* Enable or disable custom depth
