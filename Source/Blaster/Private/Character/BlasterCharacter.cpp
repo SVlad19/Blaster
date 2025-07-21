@@ -428,14 +428,7 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 
 void ABlasterCharacter::Elim()
 {
-	if (Combat && Combat->EquippedWeapon.IsValid()) {
-		if (Combat->EquippedWeapon->bDestroyWeapon) {
-			Combat->EquippedWeapon->Destroy();
-		}
-		else {
-			Combat->EquippedWeapon->Dropped();
-		}
-	}
+	DropOrDestroyWeapons();
 
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
@@ -513,6 +506,36 @@ void ABlasterCharacter::ElimTimerFinished()
 	}
 	if (ElimBotComponent) {
 		ElimBotComponent->DestroyComponent();
+	}
+}
+
+void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (!Weapon) 
+	{
+		return;
+	}
+
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else 
+	{
+		Weapon->Dropped();
+	}
+}
+
+void ABlasterCharacter::DropOrDestroyWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon.IsValid()) {
+			DropOrDestroyWeapon(Combat->EquippedWeapon.Get());
+		}
+		if (Combat->SecondaryWeapon.IsValid()) {
+			DropOrDestroyWeapon(Combat->SecondaryWeapon.Get());
+		}
 	}
 }
 
@@ -677,12 +700,7 @@ void ABlasterCharacter::Equip(const FInputActionValue& Value)
 	}
 
 	if (Combat) {
-		if (HasAuthority()) {
-			Combat->EquipWeapon(OverlappingWeapon.Get());
-		}
-		else {
-			ServerEquipButtonPressed();
-		}
+		ServerEquipButtonPressed();
 	}
 }
 
@@ -770,8 +788,16 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
-	if (Combat) {
-		Combat->EquipWeapon(OverlappingWeapon.Get());
+	if (Combat)
+	{
+		if (OverlappingWeapon) 
+		{
+			Combat->EquipWeapon(OverlappingWeapon.Get());
+		}
+		else if(Combat->ShouldSwapWeapons())
+		{
+			Combat->SwapWeapons();
+		}
 	}
 }
 

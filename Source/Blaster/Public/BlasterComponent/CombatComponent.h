@@ -20,6 +20,7 @@ public:
 	
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	void Reload();
+	void SwapWeapons();
 
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
@@ -42,6 +43,7 @@ public:
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 
 	FORCEINLINE int32 GetGrenades()const { return Grenades; }
+	bool ShouldSwapWeapons();
 
 	friend class ABlasterCharacter;
 
@@ -55,10 +57,13 @@ protected:
 	void Fire();
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void AttachActorToBackpack(AActor* ActorToAttach);
 	void UpdateCarriedAmmo();
-	void PlayEquipWeaponSound();
+	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
 	void ReloadEmptyWeapon();
 	void ShowAttachedGrenade(bool bShowGrenade);
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
 
 	UFUNCTION(Server,Reliable)
 	void ServerSetAiming(bool bIsAiming);
@@ -78,6 +83,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
@@ -105,7 +113,11 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	TWeakObjectPtr<class AWeapon> EquippedWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	TWeakObjectPtr<class AWeapon> SecondaryWeapon;
 	
+
 	UPROPERTY(Replicated)
 	bool bAiming;
 
