@@ -44,5 +44,12 @@ public:
 	TObjectPtr<class UTextBlock> MatchCountdownText;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UTextBlock> GrenadesText;
+	TObjectPtr<class UTextBlock> GrenadesText;	
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> HighPingImage;	
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<class UWidgetAnimation> HighPingAnimation;
+
 };
